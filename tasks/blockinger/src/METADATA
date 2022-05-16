@@ -1,0 +1,18 @@
+name: "Blockinger"
+description:
+    "Free classic Tetris® clone for Android, originally developed by Simon "
+    "Willeke and currently maintained by Tasio Leiva."
+
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://github.com/tasioleiva/Blockinger"
+  }
+  url {
+    type: GIT
+    value: "https://github.com/tasioleiva/Blockinger.git"
+  }
+  version: "b427e66765515f10e5354c2468e610108e4cf342"
+  last_upgrade_date { year: 2019 month: 11 day: 14 }
+  license_type: RESTRICTED
+}

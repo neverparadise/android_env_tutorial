@@ -1,0 +1,3 @@
+include ':app'
+include ':rl-task-java', ':rl-task-android'
+rootProject.name = "Catch The Ball"

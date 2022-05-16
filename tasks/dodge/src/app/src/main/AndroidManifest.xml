@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.dozingcatsoftware.dodge"
+    android:installLocation="auto"
+    android:versionCode="8"
+    android:versionName="1.4.3">
+
+    <application
+        android:allowBackup="false"
+        android:icon="@drawable/icon"
+        android:label="@string/app_name"
+        tools:ignore="GoogleAppIndexingWarning">
+
+        <activity
+            android:name=".DodgeMain"
+            android:configChanges="orientation|keyboard|keyboardHidden"
+            android:hardwareAccelerated="true"
+            android:label="@string/app_name"
+            android:screenOrientation="fullSensor">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="DodgeAbout"
+            android:screenOrientation="fullSensor" />
+
+        <activity
+            android:name="DodgePreferences"
+            android:screenOrientation="fullSensor" />
+
+    </application>
+
+</manifest>

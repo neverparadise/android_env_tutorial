@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="Preferences">
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:enabled="true"
+            android:key="tiltControl"
+            android:title="Tilt Control" />
+        <CheckBoxPreference
+            android:enabled="true"
+            android:key="flashingColors"
+            android:title="Flashing Dots" />
+        <CheckBoxPreference
+            android:enabled="true"
+            android:key="showFPS"
+            android:title="Show FPS" />
+        <CheckBoxPreference
+            android:key="useBackgroundImage"
+            android:title="Use Background Image" />
+        <com.dozingcatsoftware.dodge.BackgroundImagePreference
+            android:key="selectBackgroundImage"
+            android:layout="@layout/image_preference"
+            android:title="Select Background..." />
+    </PreferenceCategory>
+</PreferenceScreen>
