@@ -117,7 +117,7 @@ def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
     reward = torch.stack(rewards).to(device, dtype=torch.float)
     next_pixels = torch.cat(next_obs_dicts['pixels'], dim=0).to(device, dtype=torch.float)
     next_timedeltas = torch.stack(next_obs_dicts['timedelta']).to(device, dtype=torch.long)
-    dones = torch.stack(dones).to(device, dtype=torch.float)
+    dones = torch.stack(dones).to(device).float()
     
     q_out = behavior_net.forward(cur_pixels, cur_timedeltas)
     q_a = q_out.gather(1, actions)

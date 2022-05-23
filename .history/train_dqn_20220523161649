@@ -82,14 +82,14 @@ FIRST = dm_env.StepType.FIRST
 DONE = dm_env.StepType.LAST
 GAMMA=0.9
 MEMORY_SIZE = 50000
-BATCH_SIZE = 5   # 32
+BATCH_SIZE = 128   # 32
 LEARNING_RATE = 0.000625   # 0.01
 TARGET_UPDATE = 10  # 5
 SAVE_PATH = "/home/slowlab/android_env_tutorial/weights/dqn/"
 MODEL_NAME = 'DQN'
 ENV_NAME = 'mdp_0000'
 SAVE_PERIOD = 100
-START_SIZE = 8
+START_SIZE = 20
 
 
 def main():
@@ -132,8 +132,6 @@ def main():
         
             next_timestep = env.step(action=action)
             total_rewards += next_timestep.reward
-            transition = (timestep, action, next_timestep)
-            memory.put(transition) # break는 반드시 메모리에 넣고 끝낸다.
             
             if next_timestep.step_type == DONE:
                 print(f'total_rewards of episode {episode}: {total_rewards}')
@@ -143,6 +141,8 @@ def main():
                 writer.add_scalar("loss", loss, episode)
                 break
         
+            transition = (timestep, action, next_timestep)
+            memory.put(transition)
             timestep = next_timestep
             if memory.size() > START_SIZE:
                 loss = train_dqn(behavior_policy, target_policy, memory, optimizer, GAMMA, BATCH_SIZE)

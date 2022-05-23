@@ -76,32 +76,29 @@ def pixel_converter(observation):
 
 def make_batch(memory, batch_size):
     time_steps, actions_dicts, next_timesteps = memory.sample(batch_size)
-    obs_dicts = {'pixels': [], 'timedelta': []}
-    next_obs_dicts = {'pixels': [], 'timedelta': []}
+    obs_dicts = {'pixels': [], 'timedelta': torch.tensor([])}
+    next_obs_dicts = {'pixels': [], 'timedelta': torch.tensor([])}
     actions = []
     rewards = []
     dones = []
     
     # actions, 
     for action_dict in actions_dicts:
-      actions.append(torch.tensor([action_dict['action_id']]).to(device))
+      actions.append([action_dict['action_id']])
     
     # observations, next_observations, rewards, dones
     for ts, next_ts in zip(time_steps, next_timesteps):
-      #print('before pixel shape : {}'.format(ts.observation['pixels'].shape)) # (120, 80, 1)
       obs_pixel = pixel_converter(ts.observation)
-      #print('after pixel shape : {}'.format(obs_pixel.shape)) # (1, 1, 120, 80)
-      
       obs_timedelta = ts.observation['timedelta']
       next_obs_pixel = pixel_converter(next_ts.observation)
       next_obs_timedelta = next_ts.observation['timedelta']
       
       obs_dicts['pixels'].append(obs_pixel)
+      obs_dicts['timedelta'].append([obs_timedelta])
       next_obs_dicts['pixels'].append(next_obs_pixel)
-      obs_dicts['timedelta'].append(torch.tensor([obs_timedelta]).to(device))
-      next_obs_dicts['timedelta'].append(torch.tensor([next_obs_timedelta]).to(device))
+      next_obs_dicts['timedelta'].append([next_obs_timedelta])
       
-      rewards.append(torch.tensor([ts.reward]).to(device))
+      rewards.append([ts.reward])
       if ts.step_type != DONE:
         dones.append(torch.tensor([1]).to(device))
       else:
@@ -111,13 +108,13 @@ def make_batch(memory, batch_size):
 
 def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
     obs_dicts, actions, next_obs_dicts, rewards, dones = make_batch(memory, batch_size)
-    cur_pixels = torch.cat(obs_dicts['pixels'], dim=0).to(device, dtype=torch.float)
-    cur_timedeltas = torch.stack(obs_dicts['timedelta']).to(device, dtype=torch.long)
-    actions = torch.stack(actions).to(device, dtype=torch.long)
-    reward = torch.stack(rewards).to(device, dtype=torch.float)
-    next_pixels = torch.cat(next_obs_dicts['pixels'], dim=0).to(device, dtype=torch.float)
-    next_timedeltas = torch.stack(next_obs_dicts['timedelta']).to(device, dtype=torch.long)
-    dones = torch.stack(dones).to(device, dtype=torch.float)
+    cur_pixels = torch.tensor(obs_dicts['pixels']).to(device).float()
+    cur_timedeltas = torch.tensor(obs_dicts['timedelta']).to(device)
+    actions = torch.tensor(actions).to(device).int()
+    reward = torch.tensor(rewards).to(device).float()
+    next_pixels = torch.tensor(next_obs_dicts['pixels']).to(device).float()
+    next_timedeltas = torch.tensor(next_obs_dicts['timedelta']).to(device)
+    dones = torch.tensor(dones).to(device).float()
     
     q_out = behavior_net.forward(cur_pixels, cur_timedeltas)
     q_a = q_out.gather(1, actions)
