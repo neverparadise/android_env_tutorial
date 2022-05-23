@@ -43,26 +43,29 @@ class ClassicCNN(nn.Module):
         self.conv_module = nn.Sequential(*self.layers)
         
 
-    def forward(self, pixels, timedeltas):
+    def forward(self, pixels, time_deltas):
       x = self.conv_module(pixels) 
       x = x.view(x.size(0), -1)
-      concat_x = torch.cat((x, timedeltas), dim=1)
+      concat_x = torch.cat((x, time_deltas), dim=1)
       out = self.fc(concat_x)
 
       return out
   
-    def sample_action(self, obs_dict, eps):
-      pixels = pixel_converter(obs_dict)        
-      time_delta = torch.tensor([obs_dict['timedelta']]).to(device)
-      time_delta = time_delta.unsqueeze(1)
-      
-      out = self.forward(pixels, time_delta)
-      coin = random.random()
-      if coin < eps:
-          return random.randint(0, self.num_actions-1)
-      else:
-          return torch.argmax(out).item()
-      
+    def sample_action(self, obs_dict, eps, training=False):
+      if training:
+        pixels = obs_dict['pixels']
+        time_deltas = obs_dict['time_delta']
+        out = self.forward(obs_dict, time_deltas)
+        coin = random.random()
+        if coin < eps:
+            return random.randint(0, self.num_actions-1)
+        else:
+            return torch.argmax(out).item()
+        
+      else: # not training
+        pixels = pixel_converter(obs_dict)
+        time_delta = obs_dict['time_delta']
+
 def pixel_converter(observation):
     if len(observation['pixels'].shape) < 4:
         pixel_tensor = observation['pixels']
@@ -84,7 +87,7 @@ def make_batch(memory, batch_size):
     
     # actions, 
     for action_dict in actions_dicts:
-      np.append(actions, [action_dict['action_id']])
+      np.append(actions, action_dict['action_id'])
     
     # observations, next_observations, rewards, dones
     for ts, next_ts in zip(time_steps, next_timesteps):
@@ -94,33 +97,49 @@ def make_batch(memory, batch_size):
       next_obs_timedelta = next_ts.timedetla
       
       np.append(obs_dicts['pixels'], obs_pixel)
-      np.append(obs_dicts['timedelta'], [obs_timedelta])
+      np.append(obs_dicts['timedelta'], obs_timedelta)
       np.append(next_obs_dicts['pixels'], next_obs_pixel)
-      np.append(next_obs_dicts['timedelta'], [next_obs_timedelta])
+      np.append(next_obs_dicts['timedelta'], next_obs_timedelta)
       
-      np.append(rewards, [ts.reward])
+      np.append(rewards, ts.reward)
       
       if ts.step_type != DONE:
         np.append(dones, 1)
       else:
         np.append(dones, 0)
         
-    return obs_dicts, actions, next_obs_dicts, rewards, dones
+    
+
+      
+      
+      
+      
+    
+
 
 def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
-    obs_dicts, actions, next_obs_dicts, rewards, dones = make_batch(memory, batch_size)
-    cur_pixels = torch.tensor(obs_dicts['pixels']).to(device).float()
-    cur_timedeltas = torch.tensor(obs_dicts['timedelta']).to(device)
-    actions = torch.tensor(actions).to(device).int()
-    reward = torch.tensor(rewards).to(device).float()
-    next_pixels = torch.tensor(next_obs_dicts['pixels']).to(device).float()
-    next_timedeltas = torch.tensor(next_obs_dicts['timedelta']).to(device)
-    dones = torch.tensor(dones).to(device).float()
+    obs_tensor, delta, actions, reward, next_obs_tensor = memory.sample(batch_size)    
+    obs_tensor = obs_tensor.to(device).float()
+    delta = delta.to(device).float()
+    actions = actions.to(device)
+    reward = reward.to(device).float()
+    next_obs_tensor = next_obs_tensor.to(device).float()
     
-    q_out = behavior_net.forward(cur_pixels, cur_timedeltas)
-    q_a = q_out.gather(1, actions)
-    max_target_q = target_net(next_pixels, next_timedeltas).max(1)[0].unsqueeze(1).detach()
-    target = reward + gamma * max_target_q * dones
+            s_lst = torch.tensor(np.array(obs_lst))
+        delta_lst = torch.tensor(np.array(delta_lst))
+        a_lst = torch.tensor(action_lst, dtype=torch.int64)
+        r_lst = torch.tensor(np.array(reward_lst))
+        ns_lst = torch.tensor(np.array(next_obs_list))
+        
+      
+
+
+    q_out = behavior_net(obs_tensor)
+    q_a = q_out.gather(1, action)
+    # action 축 기준으로 max 취한 후, 0번째 인덱스를 가져오면 values를 가져온다.
+    # 그 후 shape를 맞추기 위해 unsqueeze()를 한다.
+    max_target_q = target_net(next_obs_tensor).max(1)[0].unsqueeze(1).detach()
+    target = reward + gamma * max_target_q 
     loss = F.smooth_l1_loss(q_a, target).to(device)
 
     optimizer.zero_grad()
@@ -128,3 +147,48 @@ def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
     optimizer.step()
     return loss.item()
 
+class DeepResidualCNN(nn.Module):
+  def __init__(self, in_channels, out_channels, output_dim, layer_num):
+    super().__init__()
+    # TODO
+    kernel_size = 3
+    stride = 1
+    self.leakyrelu = nn.LeakyReLU()
+    # First layer
+    self.first_block = nn.Sequential(
+          nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride,
+                            padding=1, bias=True),
+          nn.BatchNorm2d(out_channels),
+          nn.LeakyReLU())
+    
+    # Middle layers
+    self.conv_layers = nn.ModuleList()
+    self.channels = [out_channels for i in range(layer_num)]
+    for i in range(layer_num):  
+      conv_block = nn.Sequential(
+                                nn.Conv2d(out_channels, out_channels, kernel_size=kernel_size, stride=stride,
+                                padding=1, bias=True),
+                                nn.LeakyReLU())
+                                
+      self.conv_layers.append(conv_block)
+    
+    linear_input_size = 4*3*out_channels
+    
+    # Last layer
+    self.fc = nn.Sequential(
+          nn.Flatten(),
+          nn.Linear(linear_input_size, output_dim),
+          nn.Softmax()
+      )
+
+  def forward(self, x):
+    if len(x.shape) < 4:
+      x = x.unsqueeze(0)
+    x = self.first_block(x)
+    shortcut = x
+    for conv_block in self.conv_layers:
+      x = conv_block(x)
+      x += shortcut
+      shortcut = x
+    x = self.fc(x)
+    return x

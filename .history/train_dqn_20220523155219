@@ -1,0 +1,67 @@
+from typing import Dict
+from absl import app
+from absl import flags
+from absl import logging
+
+import android_env
+from dm_env import specs
+import numpy as np
+import os
+
+import numpy as np
+import random
+import torch
+import torch.optim as optim
+from models.DQN import ClassicCNN, train_dqn
+from buffer.replay_buffer import ReplayBuffer
+from utils import *
+from torch.utils.tensorboard import SummaryWriter
+import os
+
+
+original_env = android_env.load(
+      emulator_path='~/Android/Sdk/emulator/emulator',
+      android_sdk_root='~/Android/Sdk',
+      android_avd_home='~/.android/avd',
+      avd_name='my_avd',
+      adb_path='~/Android/Sdk/platform-tools/adb',
+      task_path=f'{os.curdir}/tasks/mdp/mdp_0000.textproto',
+      #task_path=f'{os.curdir}/tasks/mdp/mdp_0003.textproto',
+      run_headless=False)
+
+from android_env.wrappers.discrete_action_wrapper import DiscreteActionWrapper
+from android_env.wrappers.image_rescale_wrapper import ImageRescaleWrapper
+from android_env.wrappers.float_pixels_wrapper import FloatPixelsWrapper
+from android_env.wrappers.tap_action_wrapper import TapActionWrapper
+
+def make_env(env):
+    print('-'*128)
+    print(env.action_spec())
+    print()
+    print(env.observation_spec())  
+    print()
+    
+    env = ImageRescaleWrapper(env, zoom_factors=(0.0625, 0.0745),  grayscale=True)
+    print('-'*128)
+    print(env.action_spec())
+    print()
+    print(env.observation_spec())  
+    print()
+    
+    env = TapActionWrapper(env, touch_only=True)
+    print('-'*128)
+    print(env.action_spec())
+    print()
+    print(env.observation_spec())  
+    print()
+    
+    
+    env = DiscreteActionWrapper(env, (6, 9), redundant_actions=False) # action touch grid: 54 blocks
+    print('-'*128)
+    print(env.action_spec())
+    print()
+    print(env.observation_spec())  
+    print()
+    
+    return env
+

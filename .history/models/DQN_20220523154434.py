@@ -43,26 +43,30 @@ class ClassicCNN(nn.Module):
         self.conv_module = nn.Sequential(*self.layers)
         
 
-    def forward(self, pixels, timedeltas):
+    def forward(self, pixels, time_deltas):
       x = self.conv_module(pixels) 
       x = x.view(x.size(0), -1)
-      concat_x = torch.cat((x, timedeltas), dim=1)
+      concat_x = torch.cat((x, time_deltas), dim=1)
       out = self.fc(concat_x)
 
       return out
   
     def sample_action(self, obs_dict, eps):
-      pixels = pixel_converter(obs_dict)        
-      time_delta = torch.tensor([obs_dict['timedelta']]).to(device)
-      time_delta = time_delta.unsqueeze(1)
-      
-      out = self.forward(pixels, time_delta)
+      if training:
+        pixels = obs_dict['pixels']      
+      else: # not training
+        pixels = pixel_converter(obs_dict)
+        
+      time_delta = obs_dict['time_delta']
+      out = self.forward(obs_dict, time_delta)
       coin = random.random()
       if coin < eps:
           return random.randint(0, self.num_actions-1)
       else:
           return torch.argmax(out).item()
       
+
+
 def pixel_converter(observation):
     if len(observation['pixels'].shape) < 4:
         pixel_tensor = observation['pixels']
@@ -84,7 +88,7 @@ def make_batch(memory, batch_size):
     
     # actions, 
     for action_dict in actions_dicts:
-      np.append(actions, [action_dict['action_id']])
+      np.append(actions, action_dict['action_id'])
     
     # observations, next_observations, rewards, dones
     for ts, next_ts in zip(time_steps, next_timesteps):
@@ -94,11 +98,11 @@ def make_batch(memory, batch_size):
       next_obs_timedelta = next_ts.timedetla
       
       np.append(obs_dicts['pixels'], obs_pixel)
-      np.append(obs_dicts['timedelta'], [obs_timedelta])
+      np.append(obs_dicts['timedelta'], obs_timedelta)
       np.append(next_obs_dicts['pixels'], next_obs_pixel)
-      np.append(next_obs_dicts['timedelta'], [next_obs_timedelta])
+      np.append(next_obs_dicts['timedelta'], next_obs_timedelta)
       
-      np.append(rewards, [ts.reward])
+      np.append(rewards, ts.reward)
       
       if ts.step_type != DONE:
         np.append(dones, 1)

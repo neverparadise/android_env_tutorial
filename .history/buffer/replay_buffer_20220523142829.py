@@ -20,10 +20,11 @@ class ReplayBuffer():
         for transition in mini_batch:
             timestep, action, next_timestep = transition
             timestep_lst.append(timestep) # numpy array
-            action_lst.append(action)
+            action_lst.append([action])
             next_timestep_lst.append(next_timestep)
 
-        return timestep_lst, action_lst, next_timestep_lst
+
+        return obs_lst, delta_lst, action_lst, reward_lst, next_obs_list
 
     def size(self):
         return len(self.buffer)

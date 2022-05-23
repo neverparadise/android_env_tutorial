@@ -94,9 +94,9 @@ def make_batch(memory, batch_size):
       next_obs_timedelta = next_ts.timedetla
       
       np.append(obs_dicts['pixels'], obs_pixel)
-      np.append(obs_dicts['timedelta'], [obs_timedelta])
+      np.append([obs_dicts['timedelta'], obs_timedelta])
       np.append(next_obs_dicts['pixels'], next_obs_pixel)
-      np.append(next_obs_dicts['timedelta'], [next_obs_timedelta])
+      np.append(next_obs_dicts['timedelta'], next_obs_timedelta)
       
       np.append(rewards, [ts.reward])
       

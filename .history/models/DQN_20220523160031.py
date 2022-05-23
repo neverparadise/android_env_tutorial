@@ -53,9 +53,7 @@ class ClassicCNN(nn.Module):
   
     def sample_action(self, obs_dict, eps):
       pixels = pixel_converter(obs_dict)        
-      time_delta = torch.tensor([obs_dict['timedelta']]).to(device)
-      time_delta = time_delta.unsqueeze(1)
-      
+      time_delta = torch.tensor(obs_dict['timedelta']).to(device)
       out = self.forward(pixels, time_delta)
       coin = random.random()
       if coin < eps:
@@ -84,7 +82,7 @@ def make_batch(memory, batch_size):
     
     # actions, 
     for action_dict in actions_dicts:
-      np.append(actions, [action_dict['action_id']])
+      np.append(actions, action_dict['action_id'])
     
     # observations, next_observations, rewards, dones
     for ts, next_ts in zip(time_steps, next_timesteps):
@@ -94,11 +92,11 @@ def make_batch(memory, batch_size):
       next_obs_timedelta = next_ts.timedetla
       
       np.append(obs_dicts['pixels'], obs_pixel)
-      np.append(obs_dicts['timedelta'], [obs_timedelta])
+      np.append(obs_dicts['timedelta'], obs_timedelta)
       np.append(next_obs_dicts['pixels'], next_obs_pixel)
-      np.append(next_obs_dicts['timedelta'], [next_obs_timedelta])
+      np.append(next_obs_dicts['timedelta'], next_obs_timedelta)
       
-      np.append(rewards, [ts.reward])
+      np.append(rewards, ts.reward)
       
       if ts.step_type != DONE:
         np.append(dones, 1)
