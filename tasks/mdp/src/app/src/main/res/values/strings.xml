@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Vokram</string>
+    <string name="action_settings">Settings</string>
+    <string name="restart">Restart</string>
+    <string name="assertion">Assertion</string>
+    <string name="steps_count_and_played_total">#steps: %1$s / %2$s</string>
+    <string name="score_and_value">Score: %s</string>
+    <string name="state_and_name">State: %s</string>
+    <string name="default_mdp">default MDP</string>
+    <string name="river_swim">River Swim</string>
+    <string name="six_arms">Six arms</string>
+    <string name="flood_it">Flood It</string>
+    <string name="episode_ended_and_score">Episode ended!\nYour score is: %s\n\nPress RESTART to start a new game.</string>
+
+    <string name="state_earth">Earth</string>
+    <string name="state_moon">Moon</string>
+    <string name="state_space_station">Space Station</string>
+    <string name="state_mars">Mars</string>
+    <string name="state_orbit">Orbit</string>
+
+    <string name="action_spaceship">Spaceship</string>
+    <string name="action_spacecraft">Spacecraft</string>
+    <string name="action_bus">Bus</string>
+    <string name="action_bike">Bike</string>
+    <string name="action_flying_saucer">Flying saucer</string>
+    <string name="action_rocket">Rocket</string>
+    <string name="action_teleportation">Teleportation</string>
+    <string name="action_catapult">Catapult</string>
+    <string name="language_settings">Language</string>
+</resources>

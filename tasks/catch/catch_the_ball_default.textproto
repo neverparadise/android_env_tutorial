@@ -14,6 +14,8 @@
 
 # proto-file: android_env/proto/task.proto
 # proto-message: android_env.Task
+# . 이 파이썬 파일의 경로인가?
+# 아니면 프로토파일의 경로인가?
 
 id: "catch_the_ball_default"
 name: "Catch The Ball - Default"

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/baseline_8"
+        android:paddingTop="@dimen/baseline_8"
+        android:paddingEnd="@dimen/baseline_8"
+        android:paddingBottom="@dimen/baseline_8">
+
+        <TextView
+            android:id="@+id/stepsCountTv"
+            android:layout_width="@dimen/baseline_0"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="start"
+            android:maxLines="1"
+            android:paddingStart="@dimen/baseline_0"
+            android:paddingEnd="@dimen/baseline_8"
+            android:textAllCaps="true"
+            android:textAppearance="?android:attr/textAppearanceInverse"
+            android:textStyle="bold"
+            tools:text="#steps: 000 / &#8734;" />
+
+        <TextView
+            android:id="@+id/scoreTv"
+            android:layout_width="@dimen/baseline_0"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="start"
+            android:gravity="end"
+            android:maxLines="1"
+            android:paddingStart="@dimen/baseline_8"
+            android:paddingEnd="@dimen/baseline_0"
+            android:textAllCaps="true"
+            android:textAppearance="?android:attr/textAppearanceInverse"
+            android:textStyle="bold"
+            tools:ignore="EllipsizeMaxLines"
+            tools:text="Score: 0.00" />
+
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <RelativeLayout
+            android:id="@+id/actionsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:background="#00FF00" />
+
+        <TextView
+            android:id="@+id/rewardTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|end"
+            android:background="@color/black_70"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:gravity="center"
+            android:minWidth="@dimen/baseline_48"
+            android:padding="@dimen/baseline_8"
+            android:textAppearance="?android:attr/textAppearanceInverse"
+            android:textStyle="bold"
+            android:visibility="gone"
+            tools:text="+99"
+            tools:visibility="visible" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/currentStateTv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:ellipsize="end"
+        android:gravity="start"
+        android:maxLines="1"
+        android:paddingStart="@dimen/baseline_8"
+        android:paddingTop="@dimen/baseline_8"
+        android:paddingEnd="@dimen/baseline_8"
+        android:paddingBottom="@dimen/baseline_8"
+        android:textAllCaps="true"
+        android:textAppearance="?android:attr/textAppearanceInverse"
+        android:textStyle="bold"
+        tools:text="State: a very long state is very long" />
+
+    <TextView
+        android:id="@+id/extraInfoTv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:textAppearance="?android:attr/textAppearance"
+        android:visibility="gone"
+        tools:text="Score: 00.00 Current state: State\n#steps played: 0 (unlimited left)"
+        tools:visibility="gone" />
+
+</LinearLayout>
+

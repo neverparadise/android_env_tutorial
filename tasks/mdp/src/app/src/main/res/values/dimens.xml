@@ -1,0 +1,13 @@
+<resources>
+    <dimen name="baseline_0">0dp</dimen>
+    <dimen name="baseline_2">2dp</dimen>
+    <dimen name="baseline_4">4dp</dimen>
+    <dimen name="baseline_8">8dp</dimen>
+    <dimen name="baseline_16">16dp</dimen>
+    <dimen name="baseline_24">24dp</dimen>
+    <dimen name="baseline_32">32dp</dimen>
+    <dimen name="baseline_40">40dp</dimen>
+    <dimen name="baseline_48">48dp</dimen>
+    <dimen name="baseline_56">56dp</dimen>
+    <dimen name="baseline_64">64dp</dimen>
+</resources>
