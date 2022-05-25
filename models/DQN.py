@@ -7,6 +7,35 @@ import dm_env
 
 DONE = dm_env.StepType.LAST
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+class MLP(nn.Module):
+    def __init__(self, flatten_dim, hidden, num_actions):
+        super().__init__()
+        self.num_actions = num_actions
+        self.fc1 = nn.Linear(flatten_dim, hidden)
+        self.fc2 = nn.Linear(hidden+1, hidden)
+        self.fc3 = nn.Linear(hidden, num_actions)
+
+    def forward(self, pixels, timedeltas):
+        x = pixels.contiguous().view(pixels.size(0), -1)
+        x = F.leaky_relu(self.fc1(x))
+        concat_x = torch.cat((x, timedeltas), dim=1)
+        x = F.leaky_relu(self.fc2(concat_x))
+        out = F.leaky_relu(self.fc3(x))
+        return out
+
+    def sample_action(self, obs_dict, eps):
+        pixels = pixel_converter(obs_dict)
+        time_delta = torch.tensor([obs_dict['timedelta']]).to(device, dtype=torch.float)
+        time_delta = time_scaler(time_delta)
+        time_delta = time_delta.unsqueeze(1)
+
+        out = self.forward(pixels, time_delta)
+        coin = random.random()
+        if coin < eps:
+            return random.randint(0, self.num_actions - 1)
+        else:
+            return torch.argmax(out).item()
+
 
 class ClassicCNN(nn.Module):
     def __init__(self, C, H, W, K, S, num_actions):
@@ -122,7 +151,7 @@ def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
     dones = torch.stack(dones).to(device, dtype=torch.float)
 
     # print(f'cur_pixels : {cur_pixels}')
-    print(f'cur_timedeltas : {cur_timedeltas}')
+    # print(f'cur_timedeltas : {cur_timedeltas}')
     q_out = behavior_net.forward(cur_pixels, cur_timedeltas)
     # print(f'q_out : {q_out}')
 
@@ -131,8 +160,8 @@ def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
     # print(f'max_target_q : {max_target_q}')
 
     target = reward + gamma * max_target_q * dones
-    print(f'target : {target}')
-    print(f'q_a : {q_a}')
+    # print(f'target : {target}')
+    # print(f'q_a : {q_a}')
 
     loss = F.mse_loss(q_a, target).to(device)
 

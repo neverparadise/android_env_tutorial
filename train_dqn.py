@@ -12,7 +12,7 @@ import numpy as np
 import random
 import torch
 import torch.optim as optim
-from models.DQN import ClassicCNN, train_dqn
+from models.DQN import ClassicCNN, train_dqn, MLP
 from buffer.replay_buffer import ReplayBuffer
 from utils import *
 from torch.utils.tensorboard import SummaryWriter
@@ -49,7 +49,7 @@ def make_env(env):
     print()
     
     
-    env = DiscreteActionWrapper(env, (6, 9), redundant_actions=False) # action touch grid: 54 blocks
+    env = DiscreteActionWrapper(env, (6, 4), redundant_actions=False) # action touch grid: 54 blocks
     print('-'*128)
     print(env.action_spec())
     print()
@@ -88,19 +88,19 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 FIRST = dm_env.StepType.FIRST
 DONE = dm_env.StepType.LAST
 GAMMA=0.9
-MEMORY_SIZE = 100000
+MEMORY_SIZE = 20000
 BATCH_SIZE = 64   # 32
 LEARNING_RATE = 0.000625   # 0.01
 TARGET_UPDATE = 50  # 5
 SAVE_PATH = "/home/slowlab/android_env_tutorial/weights/dqn/"
-MODEL_NAME = 'DQN'
+MODEL_NAME = 'DQN_MLP'
 ENV_NAME = 'mdp_0000'
 SAVE_PERIOD = 500
-START_SIZE = 100
+START_SIZE = 500
 
 
 def main():
-    summary_path = "/home/slowlab/android_env_tutorial/experiments/dqn/train/{}".format(ENV_NAME)
+    summary_path = "/home/slowlab/android_env_tutorial/experiments/dqn/train/{}".format(ENV_NAME+MODEL_NAME)
     if not os.path.isdir(summary_path):
         os.mkdir(summary_path)
     writer = SummaryWriter(summary_path)
@@ -110,15 +110,18 @@ def main():
     total_episodes = 10000
     #total_steps = 100000
     epsilon = startEpsilon
-    stepDrop = (startEpsilon - endEpsilon)  * 5 / total_episodes
+    stepDrop = (startEpsilon - endEpsilon)  * 3 / total_episodes
     n_actions = env.action_spec()['action_id'].num_values
     state_dim = env.observation_spec()['pixels'].shape
     H, W, C = state_dim[0], state_dim[1], state_dim[2]
     print(H, W, C)
-    behavior_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()    # C, H, W, K, S, num_actions
-    target_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()
+    flatten_dim = C*H*W
+    #behavior_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()    # C, H, W, K, S, num_actions
+    #target_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()
+    behavior_policy = MLP(flatten_dim, 256, n_actions).to(device).float()
+    target_policy = MLP(flatten_dim, 256, n_actions).to(device).float()
     target_policy.load_state_dict(behavior_policy.state_dict())
-    optimizer = optim.Adam(behavior_policy.parameters(), lr=LEARNING_RATE)
+    optimizer = optim.Adam(behavior_policy.parameters(), lr=LEARNING_RATE, weight_decay=0.9)
     memory = ReplayBuffer(MEMORY_SIZE)
 
     # return Timestep object (step_type, reward, time_delta, obs)
