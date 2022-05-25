@@ -28,6 +28,7 @@ original_env = android_env.load(
       task_path=f'{os.curdir}/tasks/mdp/mdp_0003.textproto',
       run_headless=False)
 
+
 from android_env.wrappers.discrete_action_wrapper import DiscreteActionWrapper
 from android_env.wrappers.image_rescale_wrapper import ImageRescaleWrapper
 from android_env.wrappers.float_pixels_wrapper import FloatPixelsWrapper
@@ -48,7 +49,7 @@ def make_env(env):
     print(env.observation_spec())  
     print()
     
-    
+    # action space가 여전히 큰가?
     env = DiscreteActionWrapper(env, (6, 4), redundant_actions=False) # action touch grid: 54 blocks
     print('-'*128)
     print(env.action_spec())
