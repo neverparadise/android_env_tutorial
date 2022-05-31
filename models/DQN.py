@@ -81,16 +81,16 @@ class ClassicCNN(nn.Module):
       return out
   
     def sample_action(self, obs_dict, eps):
-      pixels = pixel_converter(obs_dict)        
-      time_delta = torch.tensor([obs_dict['timedelta']]).to(device,  dtype=torch.float)
-      time_delta = time_scaler(time_delta)
-      time_delta = time_delta.unsqueeze(1)
-      
-      out = self.forward(pixels, time_delta)
       coin = random.random()
       if coin < eps:
           return random.randint(0, self.num_actions-1)
       else:
+          pixels = pixel_converter(obs_dict)        
+          time_delta = torch.tensor([obs_dict['timedelta']]).to(device,  dtype=torch.float)
+          time_delta = time_scaler(time_delta)
+          time_delta = time_delta.unsqueeze(1)
+          
+          out = self.forward(pixels, time_delta)
           return torch.argmax(out).item()
 
 def time_scaler(timedelta):
@@ -150,23 +150,23 @@ def train_dqn(behavior_net, target_net, memory, optimizer, gamma, batch_size):
     next_timedeltas = torch.stack(next_obs_dicts['timedelta']).to(device, dtype=torch.float)
     dones = torch.stack(dones).to(device, dtype=torch.float)
 
-    # print(f'cur_pixels : {cur_pixels}')
-    # print(f'cur_timedeltas : {cur_timedeltas}')
-    q_out = behavior_net.forward(cur_pixels, cur_timedeltas)
-    # print(f'q_out : {q_out}')
 
+    q_out = behavior_net.forward(cur_pixels, cur_timedeltas)
     q_a = q_out.gather(1, actions)
     max_target_q = target_net(next_pixels, next_timedeltas).max(1)[0].unsqueeze(1).detach()
-    # print(f'max_target_q : {max_target_q}')
-
     target = reward + gamma * max_target_q * dones
-    # print(f'target : {target}')
-    # print(f'q_a : {q_a}')
-
-    loss = F.mse_loss(q_a, target).to(device)
+    loss = F.smooth_l1_loss(q_a, target).to(device)
 
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
+    
+    
+    # print(f'cur_pixels : {cur_pixels}')
+    # print(f'cur_timedeltas : {cur_timedeltas}')
+    # print(f'q_out : {q_out}')
+    # print(f'max_target_q : {max_target_q}')
+    # print(f'target : {target}')
+    # print(f'q_a : {q_a}')
     return loss.item()
 

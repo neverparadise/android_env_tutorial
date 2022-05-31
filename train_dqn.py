@@ -26,7 +26,7 @@ original_env = android_env.load(
       adb_path='~/Android/Sdk/platform-tools/adb',
       #task_path=f'{os.curdir}/tasks/mdp/mdp_0000.textproto',
       task_path=f'{os.curdir}/tasks/mdp/mdp_0003.textproto',
-      run_headless=False)
+      run_headless=True)
 
 
 from android_env.wrappers.discrete_action_wrapper import DiscreteActionWrapper
@@ -50,14 +50,17 @@ def make_env(env):
     print()
     
     # action space가 여전히 큰가?
-    env = DiscreteActionWrapper(env, (6, 4), redundant_actions=False) # action touch grid: 54 blocks
+    # env = DiscreteActionWrapper(env, (6, 4), redundant_actions=False) # action touch grid: 54 blocks
+    env = DiscreteActionWrapper(env, (5, 5), redundant_actions=False) # action touch grid: 25 blocks
+
     print('-'*128)
     print(env.action_spec())
     print()
     print(env.observation_spec())  
     print()
     
-    env = ImageRescaleWrapper(env, zoom_factors=(0.0625, 0.0745),  grayscale=False)
+    # env = ImageRescaleWrapper(env, zoom_factors=(0.0625, 0.0745),  grayscale=True)
+    env = ImageRescaleWrapper(env, zoom_factors=(1/24, 1/18),  grayscale=True)
     print('-'*128)
     print(env.action_spec())
     print()
@@ -88,16 +91,18 @@ import dm_env
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 FIRST = dm_env.StepType.FIRST
 DONE = dm_env.StepType.LAST
-GAMMA=0.9
-MEMORY_SIZE = 20000
-BATCH_SIZE = 64   # 32
-LEARNING_RATE = 0.000625   # 0.01
-TARGET_UPDATE = 50  # 5
+GAMMA=0.99
+MEMORY_SIZE = 50000
+BATCH_SIZE = 64   # 32S
+# LEARNING_RATE = 0.000625   # 0.01
+LEARNING_RATE = 0.001
+TARGET_UPDATE = 100  # 5
 SAVE_PATH = "/home/slowlab/android_env_tutorial/weights/dqn/"
-MODEL_NAME = 'DQN_MLP'
-ENV_NAME = 'mdp_0000'
-SAVE_PERIOD = 500
-START_SIZE = 500
+# MODEL_NAME = 'DQN_MLP'
+MODEL_NAME = 'DQN_CNN_GRAY8060_mdp'
+ENV_NAME = 'mdp_0003'
+SAVE_PERIOD = 2500
+START_SIZE = 200
 
 
 def main():
@@ -111,16 +116,16 @@ def main():
     total_episodes = 10000
     #total_steps = 100000
     epsilon = startEpsilon
-    stepDrop = (startEpsilon - endEpsilon)  * 3 / total_episodes
+    stepDrop = (startEpsilon - endEpsilon)  * 10 / total_episodes
     n_actions = env.action_spec()['action_id'].num_values
     state_dim = env.observation_spec()['pixels'].shape
     H, W, C = state_dim[0], state_dim[1], state_dim[2]
     print(H, W, C)
     flatten_dim = C*H*W
-    #behavior_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()    # C, H, W, K, S, num_actions
-    #target_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()
-    behavior_policy = MLP(flatten_dim, 256, n_actions).to(device).float()
-    target_policy = MLP(flatten_dim, 256, n_actions).to(device).float()
+    behavior_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()    # C, H, W, K, S, num_actions
+    target_policy = ClassicCNN(C, H, W, 3, 2, n_actions).to(device).float()
+    # behavior_policy = MLP(flatten_dim, 256, n_actions).to(device).float()
+    # target_policy = MLP(flatten_dim, 256, n_actions).to(device).float()
     target_policy.load_state_dict(behavior_policy.state_dict())
     optimizer = optim.Adam(behavior_policy.parameters(), lr=LEARNING_RATE, weight_decay=0.9)
     memory = ReplayBuffer(MEMORY_SIZE)
@@ -153,8 +158,8 @@ def main():
             memory.put(transition) # break는 반드시 메모리에 넣고 끝낸다.
             
             if next_timestep.step_type == DONE:
-                print(f'total_rewards of episode {episode}: {total_rewards}')
-                print(f"# of transitions in memory: {memory.size()}")
+                #print(f'total_rewards of episode {episode}: {total_rewards}')
+                #print(f"# of transitions in memory: {memory.size()}")
                 writer.add_scalar("total_rewards", total_rewards, episode)
                 writer.add_scalar("memory size", memory.size(), episode)
                 writer.add_scalar("epsilon", epsilon, episode)
