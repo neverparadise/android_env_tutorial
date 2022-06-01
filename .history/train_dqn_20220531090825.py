@@ -51,7 +51,7 @@ def make_env(env):
     
     # action space가 여전히 큰가?
     # env = DiscreteActionWrapper(env, (6, 4), redundant_actions=False) # action touch grid: 54 blocks
-    env = DiscreteActionWrapper(env, (2, 2), redundant_actions=False) # action touch grid: 25 blocks
+    env = DiscreteActionWrapper(env, (5, 5), redundant_actions=False) # action touch grid: 25 blocks
 
     print('-'*128)
     print(env.action_spec())
@@ -60,9 +60,7 @@ def make_env(env):
     print()
     
     # env = ImageRescaleWrapper(env, zoom_factors=(0.0625, 0.0745),  grayscale=True)
-    #env = ImageRescaleWrapper(env, zoom_factors=(1/24, 1/18),  grayscale=True)
-    env = ImageRescaleWrapper(env, zoom_factors=(1/48, 1/27),  grayscale=True)
-
+    env = ImageRescaleWrapper(env, zoom_factors=(1/24, 1/18),  grayscale=True)
     print('-'*128)
     print(env.action_spec())
     print()
@@ -97,11 +95,11 @@ GAMMA=0.99
 MEMORY_SIZE = 50000
 BATCH_SIZE = 64   # 32S
 # LEARNING_RATE = 0.000625   # 0.01
-LEARNING_RATE = 3e-4
+LEARNING_RATE = 0.001
 TARGET_UPDATE = 100  # 5
 SAVE_PATH = "/home/slowlab/android_env_tutorial/weights/dqn/"
 # MODEL_NAME = 'DQN_MLP'
-MODEL_NAME = 'DQN_CNN_GRAY4040_2X2_mdp'
+MODEL_NAME = 'DQN_CNN_GRAY8060_mdp'
 ENV_NAME = 'mdp_0003'
 SAVE_PERIOD = 2500
 START_SIZE = 200
