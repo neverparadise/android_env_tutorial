@@ -1,3 +1,6 @@
 ./weights/
 ./experiments/
 ./trash/
+/.history/
+/.idea/
+/__pycahe__
