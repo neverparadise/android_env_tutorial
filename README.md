@@ -1,3 +1,3 @@
-# Reinforcement Learning in Android Environments Tutorial
+# Reinforcement Learning in Deepmind Android Environments Tutorial
 
 
