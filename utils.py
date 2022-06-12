@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.distributions import Normal
+from torch.distributions import Normal, Categorical
 import math
 from android_env.wrappers.discrete_action_wrapper import DiscreteActionWrapper
 from android_env.wrappers.image_rescale_wrapper import ImageRescaleWrapper
@@ -26,8 +26,8 @@ def pixel_converter(pixels):
     return pixel_tensor
 
 def time_scaler(timedelta):
-    timedelta = timedelta * 1e-8
-    timedelta = 0.0
+    timedelta = math.log(timedelta)
+    # timedelta = 0.0
     timedelta = torch.tensor([timedelta]).to(device).float()
     timedelta = timedelta.unsqueeze(0)
     return timedelta
@@ -44,6 +44,14 @@ def make_continuous_action(mu, sigma):
     action_dict['action_type'] = 0
     action_dict['touch_position'] = [touch_position[0][0].item(), touch_position[0][1].item()]
     return touch_position, action_dict, log_prob
+
+def make_discrete_action(prob):
+    #mu = torch.clamp(mu, min=0.0, max=1.0)
+    dist = Categorical(prob)
+    action_index = dist.sample()
+    action_dict = dict()
+    action_dict['action_id'] = action_index
+    return action_index, action_dict
 
 def save_model(episode, save_period, save_path, model, model_name):
     if episode % save_period == 0:

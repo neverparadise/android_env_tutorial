@@ -162,7 +162,7 @@ def train_ppo(model, buffer, optimizer, K_epoch, lmbda, gamma, eps_clip, entropy
         dist = Normal(mu, sigma)
         current_log_prob = dist.log_prob(a)
         entropy = dist.entropy() * entropy_coef
-        ratio = torch.exp(current_log_prob - old_log_prob.detach())  # a/b == exp(log(a)-log(b))
+        ratio = torch.exp(current_log_prob - old_log_prob.detach())  # 여기 detach 안하면 backprop 두 번 수행 a/b == exp(log(a)-log(b))
         surr1 = ratio * advantage
         surr2 = torch.clamp(ratio, 1-eps_clip, 1+eps_clip) * advantage
         actor_loss = (-torch.min(surr1, surr2) - entropy).mean()

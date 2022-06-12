@@ -39,14 +39,24 @@ def make_env2(env):
 
 
 def main():
+    original_env = android_env.load(
+      emulator_path='~/Android/Sdk/emulator/emulator',
+      android_sdk_root='~/Android/Sdk',
+      android_avd_home='~/.android/avd',
+      avd_name='my_avd1',
+      adb_path='~/Android/Sdk/platform-tools/adb',
+      #task_path=f'{os.curdir}/tasks/mdp/mdp_0000.textproto',
+      task_path=f'{os.curdir}/tasks/mdp/mdp_0003.textproto',
+      run_headless=True)
     with android_env.load(
-        emulator_path='~/Android/Sdk/emulator/emulator',
-        android_sdk_root='~/Android/Sdk',
-        android_avd_home='~/.android/avd',
-        avd_name='my_avd',
-        adb_path='~/Android/Sdk/platform-tools/adb',
-        task_path=f'{os.curdir}/tasks/2048/classic_2048.textproto',
-        run_headless=False) as env:
+      emulator_path='~/Android/Sdk/emulator/emulator',
+      android_sdk_root='~/Android/Sdk',
+      android_avd_home='~/.android/avd',
+      avd_name='my_avd1',
+      adb_path='~/Android/Sdk/platform-tools/adb',
+      #task_path=f'{os.curdir}/tasks/mdp/mdp_0000.textproto',
+      task_path=f'{os.curdir}/tasks/mdp/mdp_0003.textproto',
+      run_headless=True) as env:
         
         # task의 observation과 action에 대한 정보를 보겠습니다.
         env = make_env2(env)

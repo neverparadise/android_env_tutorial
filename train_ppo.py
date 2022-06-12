@@ -25,7 +25,7 @@ original_env = android_env.load(
       run_headless=True)
 
 
-env = make_continuous_env(original_env, zoom_factors=(1/24, 1/18))
+env = make_continuous_env(original_env, zoom_factors=(1/48, 1/36))
 action_spec = env.action_spec() 
 obs_spec = env.observation_spec()
 print(env.action_spec())
@@ -40,19 +40,19 @@ FIRST = dm_env.StepType.FIRST
 DONE = dm_env.StepType.LAST
 
 # Hyperparameters
-BATCH_SIZE = 32   # 32S
+BATCH_SIZE = 64   # 32S
 LEARNING_RATE = 3e-4
-GAMMA = 0.9
+GAMMA = 0.99
 LAMBDA = 0.9
 ENROPY_COEF = 1e-2
 EPS_CLIP = 0.2
-K_EPOCH = 3
-T_HORIZON = 20
+K_EPOCH = 10
+T_HORIZON = 40
 
 # MODEL, ENV, INFO
-NET_TYPE = 'MLP'
+NET_TYPE = 'CNN'
 ALG_TYPE = 'ppo'
-MODEL_NAME = 'PPO_{NET_TYPE}_GRAY8060_FloatAction_'
+MODEL_NAME = f'PPO_{NET_TYPE}_GRAY4030_FloatAction_'
 SAVE_PATH = "/home/slowlab/android_env_tutorial/weights/{}/".format(ALG_TYPE)
 ENV_NAME = 'mdp_0003'
 SUMMARY_PATH = f"/home/slowlab/android_env_tutorial/experiments/{ALG_TYPE}/train/{ENV_NAME+MODEL_NAME}"
@@ -64,82 +64,6 @@ state_dim = env.observation_spec()['pixels'].shape
 H, W, C = state_dim[0], state_dim[1], state_dim[2]
 flatten_dim = H * W * C
 def main():
-    if not os.path.isdir(SAVE_PATH):
-        os.mkdir(SAVE_PATH)
-    torch.manual_seed(3407)
-    if not os.path.isdir(SUMMARY_PATH):
-        os.mkdir(SUMMARY_PATH)
-
-    writer = SummaryWriter(SUMMARY_PATH)
-    
-    total_episodes = 10000
-    print(H, W, C)
-    model = MLP(flatten_dim, hidden=256).to(device).float() 
-    #model = PPO(C, H, W, n_actions).to(device).float()    # C, H, W, K, S, num_actions
-    buffer = Buffer(T_horizon=T_HORIZON)
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=0.9)
-
-    # return Timestep object (step_type, reward, time_deltWa, obs)
-    for episode in range(total_episodes):
-        score = 0
-        timestep = env.reset()
-        loss = 0.0        
-        if episode == 0:
-            print(timestep.observation['pixels'])
-            print(timestep.observation['pixels'].shape)
-            print(np.min(timestep.observation['pixels']))
-            print(np.max(timestep.observation['pixels']))
-            
-        while not timestep.last():
-            steps = 0
-            # * 1. convert  obs dict to obs tensors
-            obs = obs_converter(timestep.observation)
-
-            # * 2. sample action from policy
-            mu, sigma = model.pi(obs)
-            action, action_dict, log_prob = make_continuous_action(mu, sigma)
-            
-            # * 3. take a action for state transition
-            next_timestep = env.step(action_dict)
-            next_obs = obs_converter(next_timestep.observation)
-            reward = next_timestep.reward
-            done = next_timestep.step_type
-
-            # * 4. calcuate score and put the transition in buffer
-            score += next_timestep.reward
-            transition = (obs, action, reward, next_obs, done, log_prob)
-            buffer.put_data(transition)
-
-            timestep = next_timestep
-            steps+=1
-
-            # * 5. if done, terminate episode
-            if next_timestep.step_type == DONE:
-                print(f'total_rewards of episode {episode}: {score}')
-                writer.add_scalar("total_rewards", score, episode)
-                writer.add_scalar("loss", loss, episode)
-                break
-        
-        # * 6. train modelnd save
-        loss = train_ppo(model, buffer, optimizer, K_EPOCH, LAMBDA, GAMMA, EPS_CLIP, ENROPY_COEF)
-        save_model(episode, SAVE_PERIOD, SAVE_PATH, model, MODEL_NAME)
-        
-    writer.close()
-
-main()
-
-
-# MODEL, ENV, INFO
-NET_TYPE = 'CNN'
-ALG_TYPE = 'ppo'
-MODEL_NAME = 'PPO_{NET_TYPE}_GRAY8060_FloatAction_'
-SAVE_PATH = "/home/slowlab/android_env_tutorial/weights/{}/".format(ALG_TYPE)
-ENV_NAME = 'mdp_0003'
-SUMMARY_PATH = f"/home/slowlab/android_env_tutorial/experiments/{ALG_TYPE}/train/{ENV_NAME+MODEL_NAME}"
-SAVE_PERIOD = 1000
-
-
-def main2():
     if not os.path.isdir(SAVE_PATH):
         os.mkdir(SAVE_PATH)
     torch.manual_seed(3407)
@@ -165,43 +89,47 @@ def main2():
             print(timestep.observation['pixels'].shape)
             print(np.min(timestep.observation['pixels']))
             print(np.max(timestep.observation['pixels']))
-            
+        steps = 0
         while not timestep.last():
-            steps = 0
-            # * 1. convert  obs dict to obs tensors
-            obs = obs_converter(timestep.observation)
+            for t in range(T_HORIZON):
+                steps += 1
+                # * 1. convert  obs dict to obs tensors
+                obs = obs_converter(timestep.observation)
+                print(obs[1])
+                # * 2. sample action from policy
+                mu, sigma = model.pi(obs)
+                action, action_dict, log_prob = make_continuous_action(mu, sigma)
+                
+                # * 3. take a action for state transition
+                next_timestep = env.step(action_dict)
+                next_obs = obs_converter(next_timestep.observation)
+                reward = next_timestep.reward
+                done = next_timestep.step_type
 
-            # * 2. sample action from policy
-            mu, sigma = model.pi(obs)
-            action, action_dict, log_prob = make_continuous_action(mu, sigma)
-            
-            # * 3. take a action for state transition
-            next_timestep = env.step(action_dict)
-            next_obs = obs_converter(next_timestep.observation)
-            reward = next_timestep.reward
-            done = next_timestep.step_type
+                # * 4. calcuate score and put the transition in buffer
+                score += next_timestep.reward
+                transition = (obs, action, reward, next_obs, done, log_prob)
+                buffer.put_data(transition)
 
-            # * 4. calcuate score and put the transition in buffer
-            score += next_timestep.reward
-            transition = (obs, action, reward, next_obs, done, log_prob)
-            buffer.put_data(transition)
+                timestep = next_timestep
+                steps+=1
 
-            timestep = next_timestep
-            steps+=1
+                # * 5. if done, terminate episode
+                if next_timestep.step_type == DONE:
+                    break
 
-            # * 5. if done, terminate episode
+            # * 6. train modelnd save
+            loss = train_ppo(model, buffer, optimizer, K_EPOCH, LAMBDA, GAMMA, EPS_CLIP, ENROPY_COEF)
+            save_model(episode, SAVE_PERIOD, SAVE_PATH, model, MODEL_NAME)
+        
             if next_timestep.step_type == DONE:
-                print(f'total_rewards of episode {episode}: {score}')
+                print(f'total_rewards of episode {episode}: {score}, steps: {steps}')
                 writer.add_scalar("total_rewards", score, episode)
+                writer.add_scalar("steps", steps, episode)
                 writer.add_scalar("loss", loss, episode)
                 break
         
-        # * 6. train modelnd save
-        loss = train_ppo(model, buffer, optimizer, K_EPOCH, LAMBDA, GAMMA, EPS_CLIP, ENROPY_COEF)
-        save_model(episode, SAVE_PERIOD, SAVE_PATH, model, MODEL_NAME)
-        
+
     writer.close()
 
-main2()
-
-        
+main()
